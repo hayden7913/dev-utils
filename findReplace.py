@@ -30,39 +30,42 @@ def processFilesInDir(path, callback):
         else: 
             callback(dirItemPath)
             
-def rewriteFile(filePath): 
-    # Read in the file
-    with open(filePath, 'r') as file:
-        filedata = file.readlines()
-      
-    # create a new file based on provided replace function  
-    new_filedata = [];
-    for index, line in enumerate(filedata):
-        new_filedata.append(replaceFunction(line, index + 1, getFileNameFromPath(filePath)))    
-        
-    # Overwrite the file with updated text array
-    with open(filePath, 'w') as file:
-        for line in new_filedata:
-            file.write(line)
-        file.close
+def rewriteFile(lineEditorFunction): 
+    def rewriteFileWrapper(filePath):
+        # Read in the file
+        with open(filePath, 'r') as file:
+            filedata = file.readlines()
+          
+        # create a new file based on provided replace function  
+        new_filedata = [];
+        for index, line in enumerate(filedata):
+            new_filedata.append(lineEditorFunction(line, index + 1, getFileNameFromPath(filePath)))    
+            
+        # Overwrite the file with updated text array
+        with open(filePath, 'w') as file:
+            for line in new_filedata:
+                file.write(line)
+            file.close
+            
+    return rewriteFileWrapper
 
 def main():
     if len(sys.argv) > 1:
         path = sys.argv[1]   
-        print(path)
     else:
         print('please provide a path to a file or directory')
         return    
         # path='/home/hayden/Dropbox/tf/PomTracker-Capstone/client/src/containers/Timer.js'
-    print(sys.argv)
     hasProjectBeenSaved = raw_input('Have you commited to git (y/n)');
+    
+    findReplaceAndRewriteFile = rewriteFile(replaceFunction);
+    
     # if the path does not end in a word preceded by a period, assume that the path leads to a directory rather than a file
-
     doesPathLeadToDirectory = not bool(re.search(r'\.(?=\w+$)', path))
 
 
     if (hasProjectBeenSaved == 'y') & doesPathLeadToDirectory:
-        processFilesInDir(path, rewriteFile)
+        processFilesInDir(path, findReplaceAndRewriteFile) 
         print('***search complete***') 
     elif hasProjectBeenSaved == 'y':
         rewriteFile(path)
